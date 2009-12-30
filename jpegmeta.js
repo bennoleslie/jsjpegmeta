@@ -105,12 +105,6 @@ if (!this.JpegMeta) {
 	return ret;
     }
 
-    console.log("Big: " + parseNum(">", "\xff\x00"));
-    console.log("Little: " + parseNum("<", "\xff\x00"));
-    console.log("blah: " + parseSnum(">", "\xff"));
-    console.log("blah16: " + parseSnum(">", "\xff\xf0"));
-    console.log("blah16: " + parseSnum("<", "\xff\xf0"));
-
     var markers = {
 	/* Start Of Frame markers, non-differential, Huffman coding */
 	0xc0: ["SOF0", sofHandler, "Baseline DCT"],
@@ -203,8 +197,6 @@ if (!this.JpegMeta) {
 	this.general.pixelHeight = parseNum(">", this.binary_data, pos + 1, 2);
 	this.general.pixelWidth = parseNum(">", this.binary_data, pos + 3, 2);
 	this.general.type = markers[mark][2];
-
-	console.log("Found SOF: " + this);
     }
 
     /* JFIF related code */
@@ -235,7 +227,6 @@ if (!this.JpegMeta) {
 	this.jfif.Ydensity = parseNum(">", this.binary_data, pos + 10, 2);
 	this.jfif.Xthumbnail = parseNum(">", this.binary_data, pos + 12, 1);
 	this.jfif.Ythumbnail = parseNum(">", this.binary_data, pos + 13, 1);
-	console.log("Found JFIF: " + this.jfif);
     }
 
     function app0Handler(mark, pos) {
@@ -453,8 +444,6 @@ if (!this.JpegMeta) {
 
 	var ifd = {};
 	
-	console.log("# fields: " + num_fields);
-	
 	for (var i = 0; i < num_fields; i++) {
 	    /* parse the field */
 	    tag_base = base + ifd_offset + 2 + (i * 12);
@@ -508,12 +497,8 @@ if (!this.JpegMeta) {
 	    }
 
 	    ifd[tags[tag_field][1]] = value;
-
-	    console.log("Field: " + tags[tag_field][0] + "(" + tag_field + ")" + 
-			" type: " + type + " num_values: " + 
-			num_values + " value: " + value);
-
 	}
+
 	ifd.nextIfdPointer = parseNum(endian, base + ifd_offset + 2 + (num_fields * 12), 4);
 	
 	return ifd;
@@ -549,26 +534,19 @@ if (!this.JpegMeta) {
 	ifd_offset = parseNum(endian, this.binary_data, pos + 4, 4);
 
 	/* Parse 0th IFD */
-	console.log("Parsing at offset: " + ifd_offset);
 	primary_ifd = parseIfd(endian, this.binary_data, pos, ifd_offset, tifftags);
 
 	if (primary_ifd.ExifIfdPointer) {
-	    console.log("Parsing Exif at offset: " + primary_ifd.ExifIfdPointer);
 	    exif_ifd = parseIfd(endian, this.binary_data, pos, primary_ifd.ExifIfdPointer, exiftags);
 	}
 
 	if (primary_ifd.GPSInfoIfdPointer) {
-	    console.log("Parsing GPS at offset: " + primary_ifd.GPSInfoIfdPointer);
 	    gps_ifd = parseIfd(endian, this.binary_data, pos, primary_ifd.GPSInfoIfdPointer, gpstags);
 	}
 
 	if (primary_ifd.nextIfdPointer) {
-	    console.log("Can't handle multiple TIFF IFDs");
+	    /* Could handle more Ifd's here */
 	}
-
-	//this.exif = new ExifSegment();
-	
-	//console.log("Found JFIF: " + this.jfif);
     }
 
     function app1Handler(mark, pos) {
@@ -579,8 +557,6 @@ if (!this.JpegMeta) {
 	    /* Don't know about other idents */
 	}
     }
-
-
 
     JpegMeta.JpegFile = function (binary_data, filename) {
 	/* Change this to EOI if we want to parse. */
@@ -615,7 +591,6 @@ if (!this.JpegMeta) {
 	    pos_start_of_segment = pos;
 
 	    if (delim != DELIM) {
-		console.log("Unexpected");
 		break;
 	    }
 
@@ -648,8 +623,6 @@ if (!this.JpegMeta) {
 		mark_fn = undefined;
 	    }
 	    
-	    console.log("Segsize: " + segsize + " Headersize: " + headersize + " Segment: " + mark_code);
-
 	    if (mark_fn) {
 		mark_fn.call(this, mark, pos_start_of_segment + 2);
 	    }
