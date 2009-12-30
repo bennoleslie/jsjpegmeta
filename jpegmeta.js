@@ -119,32 +119,48 @@ JpegMeta.Rational.prototype.toString = function toString() {
     if (this.den === 1) {
 	return "" + this.num;
     }
-    return this.num + "/" + this.den;
+    if (this.num === 1) {
+	return this.num + " / " + this.den;
+    }
+    return this.num / this.den; // + "/" + this.den;
+}
+
+JpegMeta.Rational.prototype.asFloat = function asFloat() {
+    return this.num / this.den;
 }
 
 
-/* JfifSegment class */
-JpegMeta.JfifSegment = function JfifSegment() {
+/* MetaGroup class */
+JpegMeta.MetaGroup = function MetaGroup(fieldName, description) {
+    this.fieldName = fieldName;
+    this.description = description;
+    this.metaProps = {};
     return this;
 }
 
-JpegMeta.JfifSegment.prototype.toString = function toString() {
-    return "[JfifSegment: ver: " + this.version_major + "." + this.version_minor + 
-	" Units: " + this.units + 
-	" Xdensity: " + this.Xdensity + 
-	" Ydensity: " + this.Ydensity +
-	" Xthumbnail: " + this.Xthumbnail +
-	" Ythumbnail: " + this.Ythumbnail + "]";
+JpegMeta.MetaGroup.prototype._addProperty = function _addProperty(fieldName, description, value) {
+    var property = new JpegMeta.MetaProp(fieldName, description, value);
+    this[property.fieldName] = property;
+    this.metaProps[property.fieldName] = property;
 }
 
-/* ExifSegment class */
-JpegMeta.ExifSegment = function ExifSegment() {
+JpegMeta.MetaGroup.prototype.toString = function toString() {
+    return "[MetaGroup " + this.description + "]";
+}
+
+
+/* MetaProp class */
+JpegMeta.MetaProp = function MetaProp(fieldName, description, value) {
+    this.fieldName = fieldName;
+    this.description = description;
+    this.value = value;
     return this;
 }
 
-JpegMeta.ExifSegment.prototype.toString = function toString() {
-    return "[ExifSegment]";
+JpegMeta.MetaProp.prototype.toString = function toString() {
+    return "" + this.value;
 }
+
 
 
 /* JpegFile class */
@@ -152,6 +168,7 @@ this.JpegMeta.JpegFile = function JpegFile(binary_data, filename) {
     /* Change this to EOI if we want to parse. */
     var break_segment = this._SOS;
     
+    this.metaGroups = {};
     this._binary_data = binary_data;
     this.filename = filename;
     
@@ -245,11 +262,12 @@ this.JpegMeta.JpegFile.prototype._sofHandler = function _sofHandler (mark, pos) 
     if (this.general !== undefined) {
 	throw Error("Unexpected multiple-frame image");
     }
-    this.general = {};
-    this.general.depth = JpegMeta.parseNum(">", this._binary_data, pos, 1);
-    this.general.pixelHeight = JpegMeta.parseNum(">", this._binary_data, pos + 1, 2);
-    this.general.pixelWidth = JpegMeta.parseNum(">", this._binary_data, pos + 3, 2);
-    this.general.type = this._markers[mark][2];
+
+    this._addMetaGroup("general", "General");
+    this.general._addProperty("depth", "Depth", JpegMeta.parseNum(">", this._binary_data, pos, 1));
+    this.general._addProperty("pixelHeight", "Pixel Height", JpegMeta.parseNum(">", this._binary_data, pos + 1, 2));
+    this.general._addProperty("pixelWidth", "Pixel Width",JpegMeta.parseNum(">", this._binary_data, pos + 3, 2));
+    this.general._addProperty("type", "Type", this._markers[mark][2]);
 }
 
 /* JFIF idents */
@@ -297,9 +315,9 @@ this.JpegMeta.JpegFile.prototype._tifftags = {
     530 : ["Subsampling ratio of Y to C", "YCbCrSubSampling"],
     531 : ["Y and C positioning", "YCbCrPositioning",
 	   {1 : "centered", 2 : "co-sited"}],
-    282 : ["Image resolution in width direction", "XResolution"],
-    283 : ["Image resolution in height direction", "YResolution"],
-    296 : ["Unit of X and Y resolution", "ResolutionUnit",
+    282 : ["X Resolution", "XResolution"],
+    283 : ["Y Resolution", "YResolution"],
+    296 : ["Resolution Unit", "ResolutionUnit",
 	   {2 : "inches", 3 : "centimeters"}],
     /* B. Tags realting to recording offset */
     273 : ["Image data location", "StripOffsets"],
@@ -314,13 +332,13 @@ this.JpegMeta.JpegFile.prototype._tifftags = {
     529 : ["Color space transformation matrix coefficients", "YCbCrCoefficients"],
     532 : ["Pair of black and white reference values", "ReferenceBlackWhite"],
     /* D. Other tags */
-    306 : ["File change date and time", "DateTime"],
+    306 : ["Date and time", "DateTime"],
     270 : ["Image title", "ImageDescription"],
-    271 : ["Manufacturer of image input equipment", "Make"],
-	272 : ["Model of image input equipment", "Model"],
-    305 : ["Software used", "Software"],
+    271 : ["Make", "Make"],
+    272 : ["Model", "Model"],
+    305 : ["Software", "Software"],
     315 : ["Person who created the image", "Artist"],
-	316 : ["The computer and/or operating system in use at the time of image creation", "HostComputer"],
+    316 : ["Host Computer", "HostComputer"],
     33432 : ["Copyright holder", "Copyright"],
     
     34665 : ["Exif tag", "ExifIfdPointer"],
@@ -331,16 +349,16 @@ this.JpegMeta.JpegFile.prototype._exiftags = {
     /* Tag Support Levels (2) - 0th IFX Exif Private Tags */
     /* A. Tags Relating to Version */
     36864 : ["Exif Version", "ExifVersion"],
-    40960 : ["Supported Flashpix version", "FlashpixVersion"],
+    40960 : ["FlashPix Version", "FlashpixVersion"],
     
     /* B. Tag Relating to Image Data Characteristics */
-    40961 : ["Color space information", "ColorSpace"],
+    40961 : ["Color Space", "ColorSpace"],
     
     /* C. Tags Relating to Image Configuration */
     37121 : ["Meaning of each component", "ComponentsConfiguration"],
-    37122 : ["Image compression mode", "CompressedBitsPerPixel"],
-    40962 : ["Valid image width", "PixelXDimension"],
-    40963 : ["Valid image height", "PixelYDimension"],
+    37122 : ["Compressed Bits Per Pixel", "CompressedBitsPerPixel"],
+    40962 : ["Pixel X Dimension", "PixelXDimension"],
+    40963 : ["Pixel Y Dimension", "PixelYDimension"],
     
     /* D. Tags Relating to User Information */
     37500 : ["Manufacturer notes", "MakerNote"],
@@ -350,47 +368,47 @@ this.JpegMeta.JpegFile.prototype._exiftags = {
     40964 : ["Related audio file", "RelatedSoundFile"],
     
     /* F. Tags Relating to Date and Time */
-    36867 : ["Date and time original image was generated", "DateTimeOriginal"],
-    36868 : ["Date and time image was made digital data", "DateTimeDigitized"],
+    36867 : ["Date Time Original", "DateTimeOriginal"],
+    36868 : ["Date Time Digitized", "DateTimeDigitized"],
     37520 : ["DateTime subseconds", "SubSecTime"],
     37521 : ["DateTimeOriginal subseconds", "SubSecTimeOriginal"],
     37522 : ["DateTimeDigitized subseconds", "SubSecTimeDigitized"],
     
     /* G. Tags Relating to Picture-Taking Conditions */
     33434 : ["Exposure time", "ExposureTime"],
-    33437 : ["F number", "FNumber"],
+    33437 : ["FNumber", "FNumber"],
     34850 : ["Exposure program", "ExposureProgram"],
     34852 : ["Spectral sensitivity", "SpectralSensitivity"],
-    34855 : ["ISO speed ratings", "ISOSpeedRatings"],
+    34855 : ["ISO Speed Ratings", "ISOSpeedRatings"],
     34856 : ["Optoelectric coefficient", "OECF"],
-    37377 : ["Shutter speed",  "ShutterSpeedValue"],
-    37378 : ["Aperture", "ApertureValue"],
+    37377 : ["Shutter Speed",  "ShutterSpeedValue"],
+    37378 : ["Aperture Value", "ApertureValue"],
     37379 : ["Brightness", "BrightnessValue"],
-    37380 : ["Exposure bais", "ExposureBiasValue"],
-    37381 : ["Maximum lens aperture", "MaxApertureValue"],
-    37382 : ["Subject distance", "SubjectDistance"],
-    37383 : ["Metering mode", "MeteringMode"],
-    37384 : ["Light source", "LightSource"],
+    37380 : ["Exposure Bias Value", "ExposureBiasValue"],
+    37381 : ["Max Aperture Value", "MaxApertureValue"],
+    37382 : ["Subject Distance", "SubjectDistance"],
+    37383 : ["Metering Mode", "MeteringMode"],
+    37384 : ["Light Source", "LightSource"],
     37385 : ["Flash", "Flash"],
-    37386 : ["Lens focal length", "FocalLength"],
-    37396 : ["Subject area", "SubjectArea"],
-    41483 : ["Flash energy", "FlashEnergy"],
-    41484 : ["Spatial frequency response", "SpatialFrequencyResponse"],
-    41486 : ["Focal plan X resolution", "FocalPlaneXResolution"],
-    41487 : ["Focal plan Y resolution", "FocalPlaneYResolution"],
-    41488 : ["Focal plan resolution unit", "FocalPlaneResolutionUnit"],
-    41492 : ["Subject location", "SubjectLocation"],
-    41493 : ["Exposure index", "ExposureIndex"],
-    41495 : ["Sensing method", "SensingMethod"],
-    41728 : ["File source", "FileSource"],
-    41729 : ["Scene type", "SceneType"],
-    41730 : ["CFA pattern", "CFAPattern"],
-    41985 : ["Custom image processing", "CustomRendered"],
-    41986 : ["Exposure mode", "Exposure Mode"],
-    41987 : ["White balance", "WhiteBalance"],
-    41988 : ["Digital zoom ratio", "DigitalZoomRatio"],
-    41990 : ["Scene capture type", "SceneCaptureType"],
-    41991 : ["Gain control", "GainControl"],
+    37386 : ["Focal Length", "FocalLength"],
+    37396 : ["Subject Area", "SubjectArea"],
+    41483 : ["Flash Energy", "FlashEnergy"],
+    41484 : ["Spatial Frequency Response", "SpatialFrequencyResponse"],
+    41486 : ["Focal Plane X Resolution", "FocalPlaneXResolution"],
+    41487 : ["Focal Plane Y Resolution", "FocalPlaneYResolution"],
+    41488 : ["Focal Plane Resolution Unit", "FocalPlaneResolutionUnit"],
+    41492 : ["Subject Location", "SubjectLocation"],
+    41493 : ["Exposure Index", "ExposureIndex"],
+    41495 : ["Sensing Method", "SensingMethod"],
+    41728 : ["File Source", "FileSource"],
+    41729 : ["Scene Type", "SceneType"],
+    41730 : ["CFA Pattern", "CFAPattern"],
+    41985 : ["Custom Rendered", "CustomRendered"],
+    41986 : ["Exposure Mode", "Exposure Mode"],
+    41987 : ["White Balance", "WhiteBalance"],
+    41988 : ["Digital Zoom Ratio", "DigitalZoomRatio"],
+    41990 : ["Scene Capture Type", "SceneCaptureType"],
+    41991 : ["Gain Control", "GainControl"],
     41992 : ["Contrast", "Contrast"],
     41993 : ["Saturation", "Saturation"],
     41994 : ["Sharpness", "Sharpness"],
@@ -523,8 +541,14 @@ this.JpegMeta.JpegFile.prototype._markers = {
 }
 
 /* Private methods */
+this.JpegMeta.JpegFile.prototype._addMetaGroup = function _addMetaGroup(name, description) {
+    var group = new JpegMeta.MetaGroup(name, description);
+    this[group.fieldName] = group;
+    this.metaGroups[group.fieldName] = group;
+    return group;
+}
 
-this.JpegMeta.JpegFile.prototype._parseIfd = function _parseIfd(endian, _binary_data, base, ifd_offset, tags) {
+this.JpegMeta.JpegFile.prototype._parseIfd = function _parseIfd(endian, _binary_data, base, ifd_offset, tags, name, description) {
     var num_fields = JpegMeta.parseNum(endian, _binary_data, base + ifd_offset, 2);
     /* Per tag variables */
     var i, j;
@@ -538,8 +562,10 @@ this.JpegMeta.JpegFile.prototype._parseIfd = function _parseIfd(endian, _binary_
     var num;
     var den;
     
-    var ifd = {};
+    var group;
     
+    group = this._addMetaGroup(name, description);
+
     for (var i = 0; i < num_fields; i++) {
 	/* parse the field */
 	tag_base = base + ifd_offset + 2 + (i * 12);
@@ -565,6 +591,7 @@ this.JpegMeta.JpegFile.prototype._parseIfd = function _parseIfd(endian, _binary_
 	    value = _binary_data.slice(value_offset, value_offset + num_values);
 	} else if (type == "ASCII") {
 	    value = _binary_data.slice(value_offset, value_offset + num_values);
+	    value = value.split('\x00')[0]
 	    /* strip trail nul */
 	} else {
 	    value = new Array();
@@ -591,26 +618,23 @@ this.JpegMeta.JpegFile.prototype._parseIfd = function _parseIfd(endian, _binary_
 		value = value[0];
 	    }
 	}
-	ifd[tags[tag_field][1]] = value;
+	group._addProperty(tags[tag_field][1], tags[tag_field][0], value);
     }
-    
-    ifd.nextIfdPointer = JpegMeta.parseNum(endian, base + ifd_offset + 2 + (num_fields * 12), 4);
-    
-    return ifd;
 }
 
 this.JpegMeta.JpegFile.prototype._jfifHandler = function _jfifHandler(mark, pos) {
     if (this.jfif !== undefined) {
 	throw Error("Multiple JFIF segments found");
     }
-    this.jfif = new JpegMeta.JfifSegment();
-    this.jfif.version_major = this._binary_data.charCodeAt(pos + 5);
-    this.jfif.version_minor = this._binary_data.charCodeAt(pos + 6);
-    this.jfif.units = this._binary_data.charCodeAt(pos + 7);
-    this.jfif.Xdensity = JpegMeta.parseNum(">", this._binary_data, pos + 8, 2);
-    this.jfif.Ydensity = JpegMeta.parseNum(">", this._binary_data, pos + 10, 2);
-    this.jfif.Xthumbnail = JpegMeta.parseNum(">", this._binary_data, pos + 12, 1);
-    this.jfif.Ythumbnail = JpegMeta.parseNum(">", this._binary_data, pos + 13, 1);
+    this._addMetaGroup("jfif", "JFIF");
+    this.jfif._addProperty("version_major", "Version Major", this._binary_data.charCodeAt(pos + 5));
+    this.jfif._addProperty("version_minor", "Version Minor", this._binary_data.charCodeAt(pos + 6));
+    this.jfif._addProperty("version", "JFIF Version", this.jfif.version_major.value + "." + this.jfif.version_minor.value);
+    this.jfif._addProperty("units", "Density Unit", this._binary_data.charCodeAt(pos + 7));
+    this.jfif._addProperty("Xdensity", "X density", JpegMeta.parseNum(">", this._binary_data, pos + 8, 2));
+    this.jfif._addProperty("Ydensity", "Y Density", JpegMeta.parseNum(">", this._binary_data, pos + 10, 2));
+    this.jfif._addProperty("Xthumbnail", "X Thumbnail", JpegMeta.parseNum(">", this._binary_data, pos + 12, 1));
+    this.jfif._addProperty("Ythumbnail", "Y Thumbnail", JpegMeta.parseNum(">", this._binary_data, pos + 13, 1));
 }
 
 
@@ -618,7 +642,7 @@ this.JpegMeta.JpegFile.prototype._jfifHandler = function _jfifHandler(mark, pos)
 this.JpegMeta.JpegFile.prototype._app0Handler = function app0Handler(mark, pos) {
     var ident = this._binary_data.slice(pos, pos + 5);
     if (ident == this._JFIF_IDENT) {
-	this._jfifHandler(this, mark, pos);
+	this._jfifHandler(mark, pos);
     } else if (ident == this._JFXX_IDENT) {
 	/* Don't handle JFXX Ident yet */
     } else {
@@ -668,17 +692,33 @@ JpegMeta.JpegFile.prototype._exifHandler = function _exifHandler(mark, pos) {
     ifd_offset = JpegMeta.parseNum(endian, this._binary_data, pos + 4, 4);
     
     /* Parse 0th IFD */
-    primary_ifd = this._parseIfd(endian, this._binary_data, pos, ifd_offset, this._tifftags);
+    this._parseIfd(endian, this._binary_data, pos, ifd_offset, this._tifftags, "tiff", "TIFF");
     
-    if (primary_ifd.ExifIfdPointer) {
-	exif_ifd = this._parseIfd(endian, this._binary_data, pos, primary_ifd.ExifIfdPointer, this._exiftags);
+    if (this.tiff.ExifIfdPointer) {
+	this._parseIfd(endian, this._binary_data, pos, this.tiff.ExifIfdPointer.value, this._exiftags, "exif", "Exif");
     }
     
-    if (primary_ifd.GPSInfoIfdPointer) {
-	gps_ifd = this._parseIfd(endian, this._binary_data, pos, primary_ifd.GPSInfoIfdPointer, this._gpstags);
-    }
-    
-    if (primary_ifd.nextIfdPointer) {
-	/* Could handle more Ifd's here */
+    if (this.tiff.GPSInfoIfdPointer) {
+	this._parseIfd(endian, this._binary_data, pos, this.tiff.GPSInfoIfdPointer.value, this._gpstags, "gps", "GPS");
+	if (this.gps.GPSLatitude) {
+	    var latitude;
+	    latitude = this.gps.GPSLatitude.value[0].asFloat() + 
+		(1 / 60) * this.gps.GPSLatitude.value[1].asFloat() + 
+		(1 / 3600) * this.gps.GPSLatitude.value[2].asFloat();
+	    if (this.gps.GPSLatitudeRef.value === "S") {
+		latitude = -latitude;
+	    }
+	    this.gps._addProperty("latitude", "Dec. Latitude", latitude);
+	}
+	if (this.gps.GPSLongitude) {
+	    var longitude;
+	    longitude = this.gps.GPSLongitude.value[0].asFloat() + 
+		(1 / 60) * this.gps.GPSLongitude.value[1].asFloat() + 
+		(1 / 3600) * this.gps.GPSLongitude.value[2].asFloat();
+	    if (this.gps.GPSLongitudeRef.value === "W") {
+		longitude = -longitude;
+	    }
+	    this.gps._addProperty("longitude", "Dec. Longitude", longitude);
+	}
     }
 }
