@@ -50,6 +50,15 @@ if (this.JpegMeta) {
 
 var JpegMeta = {};
 
+JpegMeta.stringIsClean = function stringIsClean(str) {
+    for (var i = 0; i < str.length; i++) {
+	if (str.charCodeAt(i) < 0x20) {
+	    return false;
+	}
+    }
+    return true;
+}
+
 /* 
    parse an unsigned number of size bytes at offset in some binary string data.
    If endian
@@ -588,10 +597,15 @@ this.JpegMeta.JpegFile.prototype._parseIfd = function _parseIfd(endian, _binary_
 	
 	/* Read the value */
 	if (type == "UNDEFINED") {
-	    value = _binary_data.slice(value_offset, value_offset + num_values);
+	    /* FIXME: This should be done better */
+	    /*value = _binary_data.slice(value_offset, value_offset + num_values); */
+	    value = undefined;
 	} else if (type == "ASCII") {
 	    value = _binary_data.slice(value_offset, value_offset + num_values);
 	    value = value.split('\x00')[0]
+	    if (!JpegMeta.stringIsClean(value)) {
+		value = "";
+	    }
 	    /* strip trail nul */
 	} else {
 	    value = new Array();
