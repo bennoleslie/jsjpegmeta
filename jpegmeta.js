@@ -21,7 +21,7 @@ THE SOFTWARE.
 */
 
 /*
- This JavaScript library is used to parse meta-data from files 
+ This JavaScript library is used to parse meta-data from files
  with mime-type image/jpeg.
 
  Include it with something like:
@@ -59,7 +59,7 @@ JpegMeta.stringIsClean = function stringIsClean(str) {
     return true;
 }
 
-/* 
+/*
    parse an unsigned number of size bytes at offset in some binary string data.
    If endian
    is "<" parse the data as little endian, if endian
@@ -71,8 +71,8 @@ JpegMeta.parseNum = function parseNum(endian, data, offset, size) {
     var big_endian = (endian === ">");
     if (offset === undefined) offset = 0;
     if (size === undefined) size = data.length - offset;
-    for (big_endian ? i = offset : i = offset + size - 1; 
-	 big_endian ? i < offset + size : i >= offset; 
+    for (big_endian ? i = offset : i = offset + size - 1;
+	 big_endian ? i < offset + size : i >= offset;
 	 big_endian ? i++ : i--) {
 	ret <<= 8;
 	ret += data.charCodeAt(i);
@@ -80,7 +80,7 @@ JpegMeta.parseNum = function parseNum(endian, data, offset, size) {
     return ret;
 }
 
-/* 
+/*
    parse an signed number of size bytes at offset in some binary string data.
    If endian
    is "<" parse the data as little endian, if endian
@@ -93,8 +93,8 @@ JpegMeta.parseSnum = function parseSnum(endian, data, offset, size) {
     var big_endian = (endian === ">");
     if (offset === undefined) offset = 0;
     if (size === undefined) size = data.length - offset;
-    for (big_endian ? i = offset : i = offset + size - 1; 
-	 big_endian ? i < offset + size : i >= offset; 
+    for (big_endian ? i = offset : i = offset + size - 1;
+	 big_endian ? i < offset + size : i >= offset;
 	 big_endian ? i++ : i--) {
 	if (neg === undefined) {
 	    /* Negative if top bit is set */
@@ -176,11 +176,11 @@ JpegMeta.MetaProp.prototype.toString = function toString() {
 this.JpegMeta.JpegFile = function JpegFile(binary_data, filename) {
     /* Change this to EOI if we want to parse. */
     var break_segment = this._SOS;
-    
+
     this.metaGroups = {};
     this._binary_data = binary_data;
     this.filename = filename;
-    
+
     /* Go through and parse. */
     var pos = 0;
     var pos_start_of_segment = 0;
@@ -194,29 +194,29 @@ this.JpegMeta.JpegFile = function JpegFile(binary_data, filename) {
 
     /* Check to see if this looks like a JPEG file */
     if (this._binary_data.slice(0, 2) !== this._SOI_MARKER) {
-	throw new Error("Doesn't look like a JPEG file. First two bytes are " + 
-			this._binary_data.charCodeAt(0) + "," + 
+	throw new Error("Doesn't look like a JPEG file. First two bytes are " +
+			this._binary_data.charCodeAt(0) + "," +
 			this._binary_data.charCodeAt(1) + ".");
     }
-    
+
     pos += 2;
-    
+
     while (pos < this._binary_data.length) {
 	delim = this._binary_data.charCodeAt(pos++);
 	mark = this._binary_data.charCodeAt(pos++);
-	
+
 	pos_start_of_segment = pos;
-	
+
 	if (delim != this._DELIM) {
 	    break;
 	}
-	
+
 	if (mark === break_segment) {
 	    break;
 	}
-	
+
 	headersize = JpegMeta.parseNum(">", this._binary_data, pos, 2);
-	
+
 	/* Find the end */
 	pos += headersize;
 	while (pos < this._binary_data.length) {
@@ -229,9 +229,9 @@ this.JpegMeta.JpegFile = function JpegFile(binary_data, filename) {
 		}
 	    }
 	}
-	
+
 	segsize = pos - pos_start_of_segment;
-	
+
 	if (this._markers[mark]) {
 	    mark_code = this._markers[mark][0];
 	    mark_fn = this._markers[mark][1];
@@ -239,24 +239,24 @@ this.JpegMeta.JpegFile = function JpegFile(binary_data, filename) {
 	    mark_code = "UNKN";
 	    mark_fn = undefined;
 	}
-	
+
 	if (mark_fn) {
 	    this[mark_fn](mark, pos_start_of_segment + 2);
 	}
-	
+
     }
-    
+
     if (this.general === undefined) {
 	throw Error("Invalid JPEG file.");
     }
-    
+
     return this;
 }
 
 this.JpegMeta.JpegFile.prototype.toString = function () {
-    return "[JpegFile " + this.filename + " " + 
-	this.general.type + " " + 
-	this.general.pixelWidth + "x" + 
+    return "[JpegFile " + this.filename + " " +
+	this.general.type + " " +
+	this.general.pixelWidth + "x" +
 	this.general.pixelHeight +
 	" Depth: " + this.general.depth + "]";
 }
@@ -308,13 +308,13 @@ this.JpegMeta.JpegFile.prototype._tifftags = {
     256 : ["Image width", "ImageWidth"],
     257 : ["Image height", "ImageLength"],
     258 : ["Number of bits per component", "BitsPerSample"],
-    259 : ["Compression scheme", "Compression", 
+    259 : ["Compression scheme", "Compression",
 	   {1 : "uncompressed", 6 : "JPEG compression" }],
     262 : ["Pixel composition", "PhotmetricInerpretation",
 	   {2 : "RGB", 6 : "YCbCr"}],
     274 : ["Orientation of image", "Orientation",
 	   /* FIXME: Check the mirror-image / reverse encoding and rotation */
-	   {1 : "Normal", 2 : "Reverse?", 
+	   {1 : "Normal", 2 : "Reverse?",
 	    3 : "Upside-down", 4 : "Upside-down Reverse",
 	    5 : "90 degree CW", 6 : "90 degree CW reverse",
 	    7 : "90 degree CCW", 8 : "90 degree CCW reverse",}],
@@ -349,7 +349,7 @@ this.JpegMeta.JpegFile.prototype._tifftags = {
     315 : ["Person who created the image", "Artist"],
     316 : ["Host Computer", "HostComputer"],
     33432 : ["Copyright holder", "Copyright"],
-    
+
     34665 : ["Exif tag", "ExifIfdPointer"],
     34853 : ["GPS tag", "GPSInfoIfdPointer"],
 };
@@ -359,30 +359,30 @@ this.JpegMeta.JpegFile.prototype._exiftags = {
     /* A. Tags Relating to Version */
     36864 : ["Exif Version", "ExifVersion"],
     40960 : ["FlashPix Version", "FlashpixVersion"],
-    
+
     /* B. Tag Relating to Image Data Characteristics */
     40961 : ["Color Space", "ColorSpace"],
-    
+
     /* C. Tags Relating to Image Configuration */
     37121 : ["Meaning of each component", "ComponentsConfiguration"],
     37122 : ["Compressed Bits Per Pixel", "CompressedBitsPerPixel"],
     40962 : ["Pixel X Dimension", "PixelXDimension"],
     40963 : ["Pixel Y Dimension", "PixelYDimension"],
-    
+
     /* D. Tags Relating to User Information */
     37500 : ["Manufacturer notes", "MakerNote"],
     37510 : ["User comments", "UserComment"],
-    
+
     /* E. Tag Relating to Related File Information */
     40964 : ["Related audio file", "RelatedSoundFile"],
-    
+
     /* F. Tags Relating to Date and Time */
     36867 : ["Date Time Original", "DateTimeOriginal"],
     36868 : ["Date Time Digitized", "DateTimeDigitized"],
     37520 : ["DateTime subseconds", "SubSecTime"],
     37521 : ["DateTimeOriginal subseconds", "SubSecTimeOriginal"],
     37522 : ["DateTimeDigitized subseconds", "SubSecTimeDigitized"],
-    
+
     /* G. Tags Relating to Picture-Taking Conditions */
     33434 : ["Exposure time", "ExposureTime"],
     33437 : ["FNumber", "FNumber"],
@@ -423,10 +423,10 @@ this.JpegMeta.JpegFile.prototype._exiftags = {
     41994 : ["Sharpness", "Sharpness"],
     41995 : ["Device settings description", "DeviceSettingDescription"],
     41996 : ["Subject distance range", "SubjectDistanceRange"],
-    
+
     /* H. Other Tags */
     42016 : ["Unique image ID", "ImageUniqueID"],
-    
+
     40965 : ["Interoperability tag", "InteroperabilityIFDPointer"],
 }
 
@@ -472,27 +472,27 @@ this.JpegMeta.JpegFile.prototype._markers = {
     0xc1: ["SOF1", "_sofHandler", "Extended sequential DCT"],
     0xc2: ["SOF2", "_sofHandler", "Progressive DCT"],
     0xc3: ["SOF3", "_sofHandler", "Lossless (sequential)"],
-    
+
     /* Start Of Frame markers, differential, Huffman coding */
     0xc5: ["SOF5", "_sofHandler", "Differential sequential DCT"],
     0xc6: ["SOF6", "_sofHandler", "Differential progressive DCT"],
     0xc7: ["SOF7", "_sofHandler", "Differential lossless (sequential)"],
-    
+
     /* Start Of Frame markers, non-differential, arithmetic coding */
     0xc8: ["JPG", null, "Reserved for JPEG extensions"],
     0xc9: ["SOF9", "_sofHandler", "Extended sequential DCT"],
     0xca: ["SOF10", "_sofHandler", "Progressive DCT"],
     0xcb: ["SOF11", "_sofHandler", "Lossless (sequential)"],
-    
+
     /* Start Of Frame markers, differential, arithmetic coding */
     0xcd: ["SOF13", "_sofHandler", "Differential sequential DCT"],
     0xce: ["SOF14", "_sofHandler", "Differential progressive DCT"],
     0xcf: ["SOF15", "_sofHandler", "Differential lossless (sequential)"],
-    
+
     /* Huffman table specification */
     0xc4: ["DHT", null, "Define Huffman table(s)"],
     0xcc: ["DAC", null, "Define arithmetic coding conditioning(s)"],
-    
+
     /* Restart interval termination" */
     0xd0: ["RST0", null, "Restart with modulo 8 count “0”"],
     0xd1: ["RST1", null, "Restart with modulo 8 count “1”"],
@@ -502,7 +502,7 @@ this.JpegMeta.JpegFile.prototype._markers = {
     0xd5: ["RST5", null, "Restart with modulo 8 count “5”"],
     0xd6: ["RST6", null, "Restart with modulo 8 count “6”"],
     0xd7: ["RST7", null, "Restart with modulo 8 count “7”"],
-    
+
     /* Other markers */
     0xd8: ["SOI", null, "Start of image"],
     0xd9: ["EOI", null, "End of image"],
@@ -543,7 +543,7 @@ this.JpegMeta.JpegFile.prototype._markers = {
     0xfc: ["JPG12", null],
     0xfd: ["JPG13", null],
     0xfe: ["COM", null], /* Comment */
-    
+
     /* Reserved markers */
     0x01: ["JPG13", null], /* For temporary private use in arithmetic coding */
     /* 02 -> bf are reserverd */
@@ -570,9 +570,9 @@ this.JpegMeta.JpegFile.prototype._parseIfd = function _parseIfd(endian, _binary_
     var _val;
     var num;
     var den;
-    
+
     var group;
-    
+
     group = this._addMetaGroup(name, description);
 
     for (var i = 0; i < num_fields; i++) {
@@ -587,14 +587,14 @@ this.JpegMeta.JpegFile.prototype._parseIfd = function _parseIfd(endian, _binary_
 	}
 	type = this._types[type_field][0];
 	type_size = this._types[type_field][1];
-	
+
 	if (type_size * num_values <= 4) {
 	    /* Data is in-line */
 	    value_offset = tag_base + 8;
 	} else {
 	    value_offset = base + value_offset;
 	}
-	
+
 	/* Read the value */
 	if (type == "UNDEFINED") {
 	    /* FIXME: This should be done better */
@@ -680,14 +680,14 @@ JpegMeta.JpegFile.prototype._exifHandler = function _exifHandler(mark, pos) {
     if (this.exif !== undefined) {
 	throw new Error("Multiple JFIF segments found");
     }
-    
+
     /* Parse this TIFF header */
     var endian;
     var magic_field;
     var ifd_offset;
     var primary_ifd, exif_ifd, gps_ifd;
     var endian_field = this._binary_data.slice(pos, pos + 2);
-    
+
     /* Trivia: This 'I' is for Intel, the 'M' is for Motorola */
     if (endian_field === "II") {
 	endian = "<";
@@ -696,28 +696,28 @@ JpegMeta.JpegFile.prototype._exifHandler = function _exifHandler(mark, pos) {
     } else {
 	throw new Error("Malformed TIFF meta-data. Unknown endianess: " + endian_field);
     }
-    
+
     magic_field = JpegMeta.parseNum(endian, this._binary_data, pos + 2, 2);
-    
+
     if (magic_field !== 42) {
 	throw new Error("Malformed TIFF meta-data. Bad magic: " + magic_field);
     }
-    
+
     ifd_offset = JpegMeta.parseNum(endian, this._binary_data, pos + 4, 4);
-    
+
     /* Parse 0th IFD */
     this._parseIfd(endian, this._binary_data, pos, ifd_offset, this._tifftags, "tiff", "TIFF");
-    
+
     if (this.tiff.ExifIfdPointer) {
 	this._parseIfd(endian, this._binary_data, pos, this.tiff.ExifIfdPointer.value, this._exiftags, "exif", "Exif");
     }
-    
+
     if (this.tiff.GPSInfoIfdPointer) {
 	this._parseIfd(endian, this._binary_data, pos, this.tiff.GPSInfoIfdPointer.value, this._gpstags, "gps", "GPS");
 	if (this.gps.GPSLatitude) {
 	    var latitude;
-	    latitude = this.gps.GPSLatitude.value[0].asFloat() + 
-		(1 / 60) * this.gps.GPSLatitude.value[1].asFloat() + 
+	    latitude = this.gps.GPSLatitude.value[0].asFloat() +
+		(1 / 60) * this.gps.GPSLatitude.value[1].asFloat() +
 		(1 / 3600) * this.gps.GPSLatitude.value[2].asFloat();
 	    if (this.gps.GPSLatitudeRef.value === "S") {
 		latitude = -latitude;
@@ -726,8 +726,8 @@ JpegMeta.JpegFile.prototype._exifHandler = function _exifHandler(mark, pos) {
 	}
 	if (this.gps.GPSLongitude) {
 	    var longitude;
-	    longitude = this.gps.GPSLongitude.value[0].asFloat() + 
-		(1 / 60) * this.gps.GPSLongitude.value[1].asFloat() + 
+	    longitude = this.gps.GPSLongitude.value[0].asFloat() +
+		(1 / 60) * this.gps.GPSLongitude.value[1].asFloat() +
 		(1 / 3600) * this.gps.GPSLongitude.value[2].asFloat();
 	    if (this.gps.GPSLongitudeRef.value === "W") {
 		longitude = -longitude;
