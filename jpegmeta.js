@@ -632,7 +632,11 @@ this.JpegMeta.JpegFile.prototype._parseIfd = function _parseIfd(endian, _binary_
 		value = value[0];
 	    }
 	}
-	group._addProperty(tags[tag_field][1], tags[tag_field][0], value);
+        if (tags.hasOwnProperty(tag_field)) {
+	    group._addProperty(tags[tag_field][1], tags[tag_field][0], value);
+        } else {
+            console.log("WARNING(jpegmeta.js): Unknown tag: ", tag_field);
+        }
     }
 }
 
