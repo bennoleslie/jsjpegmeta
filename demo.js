@@ -37,7 +37,7 @@
 	    var group;
 	    var prop;
 	    $("status").innerHTML += "JPEG File " + jpeg + "<br />";
-            console.log("JPEG.GPS", jpeg.jps)
+
 	    if (jpeg.gps && jpeg.gps.longitude) {
 		$("status").innerHTML += "<a href='http://maps.google.com/?q=" + jpeg.gps.latitude + "," + jpeg.gps.longitude + "&amp;spn=0.05,0.05&amp;t=h&amp;om=1&amp;hl=en' target='_blank'>Locate on map</a> (opens a new window) <br />";
 	    }
