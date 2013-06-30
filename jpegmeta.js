@@ -416,6 +416,7 @@ this.JpegMeta.JpegFile.prototype._exiftags = {
     41986 : ["Exposure Mode", "Exposure Mode"],
     41987 : ["White Balance", "WhiteBalance"],
     41988 : ["Digital Zoom Ratio", "DigitalZoomRatio"],
+    41989 : ["Focal length in 35 mm film", "FocalLengthIn35mmFilm"],
     41990 : ["Scene Capture Type", "SceneCaptureType"],
     41991 : ["Gain Control", "GainControl"],
     41992 : ["Contrast", "Contrast"],
