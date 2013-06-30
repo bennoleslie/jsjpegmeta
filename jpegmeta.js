@@ -78,7 +78,7 @@ JpegMeta.parseNum = function parseNum(endian, data, offset, size) {
 	ret += data.charCodeAt(i);
     }
     return ret;
-}
+};
 
 /*
    parse an signed number of size bytes at offset in some binary string data.
@@ -110,7 +110,7 @@ JpegMeta.parseSnum = function parseSnum(endian, data, offset, size) {
 	ret *= -1;
     }
     return ret;
-}
+};
 
 /* Rational number class */
 JpegMeta.Rational = function Rational(num, den)
@@ -118,12 +118,12 @@ JpegMeta.Rational = function Rational(num, den)
     this.num = num;
     this.den = den || 1;
     return this;
-}
+};
 
 /* Rational number methods */
 JpegMeta.Rational.prototype.toString = function toString() {
     if (this.num === 0) {
-	return "" + this.num
+	return "" + this.num;
     }
     if (this.den === 1) {
 	return "" + this.num;
@@ -132,11 +132,11 @@ JpegMeta.Rational.prototype.toString = function toString() {
 	return this.num + " / " + this.den;
     }
     return this.num / this.den; // + "/" + this.den;
-}
+};
 
 JpegMeta.Rational.prototype.asFloat = function asFloat() {
     return this.num / this.den;
-}
+};
 
 
 /* MetaGroup class */
@@ -145,17 +145,17 @@ JpegMeta.MetaGroup = function MetaGroup(fieldName, description) {
     this.description = description;
     this.metaProps = {};
     return this;
-}
+};
 
 JpegMeta.MetaGroup.prototype._addProperty = function _addProperty(fieldName, description, value) {
     var property = new JpegMeta.MetaProp(fieldName, description, value);
     this[property.fieldName] = property;
     this.metaProps[property.fieldName] = property;
-}
+};
 
 JpegMeta.MetaGroup.prototype.toString = function toString() {
     return "[MetaGroup " + this.description + "]";
-}
+};
 
 
 /* MetaProp class */
@@ -164,11 +164,11 @@ JpegMeta.MetaProp = function MetaProp(fieldName, description, value) {
     this.description = description;
     this.value = value;
     return this;
-}
+};
 
 JpegMeta.MetaProp.prototype.toString = function toString() {
     return "" + this.value;
-}
+};
 
 
 
@@ -251,7 +251,7 @@ this.JpegMeta.JpegFile = function JpegFile(binary_data, filename) {
     }
 
     return this;
-}
+};
 
 this.JpegMeta.JpegFile.prototype.toString = function () {
     return "[JpegFile " + this.filename + " " +
@@ -259,7 +259,7 @@ this.JpegMeta.JpegFile.prototype.toString = function () {
 	this.general.pixelWidth + "x" +
 	this.general.pixelHeight +
 	" Depth: " + this.general.depth + "]";
-}
+};
 
 /* Some useful constants */
 this.JpegMeta.JpegFile.prototype._SOI_MARKER = '\xff\xd8';
@@ -277,7 +277,7 @@ this.JpegMeta.JpegFile.prototype._sofHandler = function _sofHandler (mark, pos) 
     this.general._addProperty("pixelHeight", "Pixel Height", JpegMeta.parseNum(">", this._binary_data, pos + 1, 2));
     this.general._addProperty("pixelWidth", "Pixel Width",JpegMeta.parseNum(">", this._binary_data, pos + 3, 2));
     this.general._addProperty("type", "Type", this._markers[mark][2]);
-}
+};
 
 /* JFIF idents */
 this.JpegMeta.JpegFile.prototype._JFIF_IDENT = "JFIF\x00";
@@ -300,7 +300,7 @@ this.JpegMeta.JpegFile.prototype._types = {
     9 : ["SLONG", 4],
     10 : ["SRATIONAL", 8],
     11 : ["FLOAT", 4],
-    12 : ["DOUBLE", 8],
+    12 : ["DOUBLE", 8]
 };
 
 this.JpegMeta.JpegFile.prototype._tifftags = {
@@ -317,7 +317,7 @@ this.JpegMeta.JpegFile.prototype._tifftags = {
 	   {1 : "Normal", 2 : "Reverse?",
 	    3 : "Upside-down", 4 : "Upside-down Reverse",
 	    5 : "90 degree CW", 6 : "90 degree CW reverse",
-	    7 : "90 degree CCW", 8 : "90 degree CCW reverse",}],
+	    7 : "90 degree CCW", 8 : "90 degree CCW reverse"}],
     277 : ["Number of components", "SamplesPerPixel"],
     284 : ["Image data arrangement", "PlanarConfiguration",
 	   {1 : "chunky format", 2 : "planar format"}],
@@ -351,7 +351,7 @@ this.JpegMeta.JpegFile.prototype._tifftags = {
     33432 : ["Copyright holder", "Copyright"],
 
     34665 : ["Exif tag", "ExifIfdPointer"],
-    34853 : ["GPS tag", "GPSInfoIfdPointer"],
+    34853 : ["GPS tag", "GPSInfoIfdPointer"]
 };
 
 this.JpegMeta.JpegFile.prototype._exiftags = {
@@ -428,8 +428,8 @@ this.JpegMeta.JpegFile.prototype._exiftags = {
     /* H. Other Tags */
     42016 : ["Unique image ID", "ImageUniqueID"],
 
-    40965 : ["Interoperability tag", "InteroperabilityIFDPointer"],
-}
+    40965 : ["Interoperability tag", "InteroperabilityIFDPointer"]
+};
 
 this.JpegMeta.JpegFile.prototype._gpstags = {
     /* A. Tags Relating to GPS */
@@ -463,8 +463,8 @@ this.JpegMeta.JpegFile.prototype._gpstags = {
     27 : ["Name of GPS processing method", "GPSProcessingMethod"],
     28 : ["Name of GPS area", "GPSAreaInformation"],
     29 : ["GPS Date", "GPSDateStamp"],
-    30 : ["GPS differential correction", "GPSDifferential"],
-}
+    30 : ["GPS differential correction", "GPSDifferential"]
+};
 
 
 this.JpegMeta.JpegFile.prototype._markers = {
@@ -546,9 +546,9 @@ this.JpegMeta.JpegFile.prototype._markers = {
     0xfe: ["COM", null], /* Comment */
 
     /* Reserved markers */
-    0x01: ["JPG13", null], /* For temporary private use in arithmetic coding */
+    0x01: ["JPG13", null] /* For temporary private use in arithmetic coding */
     /* 02 -> bf are reserverd */
-}
+};
 
 /* Private methods */
 this.JpegMeta.JpegFile.prototype._addMetaGroup = function _addMetaGroup(name, description) {
@@ -556,12 +556,11 @@ this.JpegMeta.JpegFile.prototype._addMetaGroup = function _addMetaGroup(name, de
     this[group.fieldName] = group;
     this.metaGroups[group.fieldName] = group;
     return group;
-}
+};
 
 this.JpegMeta.JpegFile.prototype._parseIfd = function _parseIfd(endian, _binary_data, base, ifd_offset, tags, name, description) {
     var num_fields = JpegMeta.parseNum(endian, _binary_data, base + ifd_offset, 2);
     /* Per tag variables */
-    var i, j;
     var tag_base;
     var tag_field;
     var type, type_field, type_size;
@@ -603,14 +602,14 @@ this.JpegMeta.JpegFile.prototype._parseIfd = function _parseIfd(endian, _binary_
 	    value = undefined;
 	} else if (type == "ASCII") {
 	    value = _binary_data.slice(value_offset, value_offset + num_values);
-	    value = value.split('\x00')[0]
+	    value = value.split('\x00')[0];
 	    if (!JpegMeta.stringIsClean(value)) {
 		value = "";
 	    }
 	    /* strip trail nul */
 	} else {
 	    value = new Array();
-	    for (j = 0; j < num_values; j++, value_offset += type_size) {
+	    for (var j = 0; j < num_values; j++, value_offset += type_size) {
 		if (type == "BYTE" || type == "SHORT" || type == "LONG") {
 		    value.push(JpegMeta.parseNum(endian, _binary_data, value_offset, type_size));
 		}
@@ -639,7 +638,7 @@ this.JpegMeta.JpegFile.prototype._parseIfd = function _parseIfd(endian, _binary_
             console.log("WARNING(jpegmeta.js): Unknown tag: ", tag_field);
         }
     }
-}
+};
 
 this.JpegMeta.JpegFile.prototype._jfifHandler = function _jfifHandler(mark, pos) {
     if (this.jfif !== undefined) {
@@ -654,7 +653,7 @@ this.JpegMeta.JpegFile.prototype._jfifHandler = function _jfifHandler(mark, pos)
     this.jfif._addProperty("Ydensity", "Y Density", JpegMeta.parseNum(">", this._binary_data, pos + 10, 2));
     this.jfif._addProperty("Xthumbnail", "X Thumbnail", JpegMeta.parseNum(">", this._binary_data, pos + 12, 1));
     this.jfif._addProperty("Ythumbnail", "Y Thumbnail", JpegMeta.parseNum(">", this._binary_data, pos + 13, 1));
-}
+};
 
 
 /* Handle app0 segments */
@@ -667,7 +666,7 @@ this.JpegMeta.JpegFile.prototype._app0Handler = function app0Handler(mark, pos) 
     } else {
 	/* Don't know about other idents */
     }
-}
+};
 
 
 /* Handle app1 segments */
@@ -678,7 +677,7 @@ this.JpegMeta.JpegFile.prototype._app1Handler = function _app1Handler(mark, pos)
     } else {
 	/* Don't know about other idents */
     }
-}
+};
 
 /* Handle exif segments */
 JpegMeta.JpegFile.prototype._exifHandler = function _exifHandler(mark, pos) {
@@ -740,4 +739,4 @@ JpegMeta.JpegFile.prototype._exifHandler = function _exifHandler(mark, pos) {
 	    this.gps._addProperty("longitude", "Dec. Longitude", longitude);
 	}
     }
-}
+};
