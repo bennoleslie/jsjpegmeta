@@ -25,13 +25,10 @@
     }
 
     function loadFiles(files) {
-	var binary_reader = new FileReader();
 	var dataurl_reader = new FileReader();
 
-	binary_reader.file = files[0];
-
-	binary_reader.onloadend = function() {
-	    var jpeg = new $j(this.result, this.file.name);
+	function display(data, filename) {
+	    var jpeg = new $j(data, filename);
 	    var groups = new Array;
 	    var props;
 	    var group;
@@ -77,14 +74,12 @@
 
 	dataurl_reader.onloadend = function() {
 	    $("img").src = this.result;
+            display(atob(this.result.replace(/^.*?,/,'')), files[0]);
 	}
 
 	$("status").innerHTML = "";
 	$("img").src = "";
-
-	binary_reader.readAsBinaryString(files[0]);
 	dataurl_reader.readAsDataURL(files[0]);
-
 	$("form").reset();
     }
 
