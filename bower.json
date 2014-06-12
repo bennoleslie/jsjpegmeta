@@ -1,5 +1,5 @@
 {
-  "name": "jpegmeta",
+  "name": "jsjpegmeta",
   "description": "Get exif info from Jpeg files",
   "version": "0.0.1",
   "main": "jpegmeta.js",
