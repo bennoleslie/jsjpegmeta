@@ -1,0 +1,24 @@
+{
+  "name": "jpegmeta",
+  "version": "0.0.1",
+  "description": "Get exif info from Jpeg files",
+  "main": "jpegmeta.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Zacknero/jsjpegmeta.git"
+  },
+  "keywords": [
+    "AngularJS",
+    "Image",
+    "Upload",
+    "Resizing"
+  ],
+  "author": "Ben Leslie","Zacknero"
+  "license": "BSD",
+  "dependencies": {
+    
+  }
+}
