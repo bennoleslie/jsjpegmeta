@@ -241,7 +241,7 @@ this.JpegMeta.JpegFile = function JpegFile(binary_data, filename) {
 	}
 
 	if (mark_fn) {
-	    this[mark_fn](mark, pos_start_of_segment + 2);
+	    this[mark_fn](mark, pos_start_of_segment + 2, segsize - 2);
 	}
 
     }
@@ -466,6 +466,65 @@ this.JpegMeta.JpegFile.prototype._gpstags = {
     30 : ["GPS differential correction", "GPSDifferential"]
 };
 
+this.JpegMeta.JpegFile.prototype._iptctags = {
+    0 : ['Record Version', 'recordVersion'],
+    3 : ['Object Type Reference', 'objectType'],
+    4 : ['Object Attribute Reference', 'objectAttribute'],
+    5 : ['Object Name', 'objectName'],
+    7 : ['Edit Status', 'editStatus'],
+    8 : ['Editorial Update', 'editorialUpdate'],
+    10 : ['Urgency', 'urgency'],
+    12 : ['Subject Reference', 'subjectRef'],
+    15 : ['Category', 'category'],
+    20 : ['Supplemental Category', 'supplCategory'],
+    22 : ['Fixture Identifier', 'fixtureID'],
+    25 : ['Keywords', 'keywords'],
+    26 : ['Content Location Code', 'contentLocCode'],
+    27 : ['Content Location Name', 'contentLocName'],
+    30 : ['Release Date', 'releaseDate'],
+    35 : ['Release Time', 'releaseTime'],
+    37 : ['Expiration Date', 'expirationDate'],
+    38 : ['Expiration Time', 'expirationTime'],
+    40 : ['Special Instructions', 'specialInstructions'],
+    42 : ['Action Advised', 'actionAdvised'],
+    45 : ['Reference Service', 'refService'],
+    47 : ['Reference Date', 'refDate'],
+    50 : ['Reference Number', 'refNumber'],
+    55 : ['Date Created', 'dateCreated'],
+    60 : ['Time Created', 'timeCreated'],
+    62 : ['Digital Creation Date', 'digitalCreationDate'],
+    63 : ['Digital Creation Time', 'digitalCreationTime'],
+    65 : ['Originating Program', 'originatingProgram'],
+    70 : ['Program Version', 'programVersion'],
+    75 : ['Object Cycle', 'objectCycle'],
+    80 : ['By-line', 'byline'],
+    85 : ['By-line Title', 'bylineTitle'],
+    90 : ['City', 'city'],
+    92 : ['Sub-location', 'sublocation'],
+    95 : ['Province/State', 'state'],
+    100 : ['Country Code', 'countryCode'],
+    101 : ['Country Name', 'countryName'],
+    103 : ['Original Transmission Reference', 'origTransRef'],
+    105 : ['Headline', 'headline'],
+    110 : ['Credit', 'credit'],
+    115 : ['Source', 'source'],
+    116 : ['Copyright Notice', 'copyrightNotice'],
+    118 : ['Contact', 'contact'],
+    120 : ['Caption/Abstract', 'caption'],
+    122 : ['Writer/Editor', 'writerEditor'],
+    125 : ['Rasterized Caption', 'rasterizedCaption'],
+    130 : ['Image Type', 'imageType'],
+    131 : ['Image Orientation', 'imageOrientation'],
+    135 : ['Language Identifier', 'languageID'],
+    150 : ['Audio Type', 'audioType'],
+    151 : ['Audio Sampling Rate', 'audioSamplingRate'],
+    152 : ['Audio Sampling Resolution', 'audioSamplingRes'],
+    153 : ['Audio Duration', 'audioDuration'],
+    154 : ['Audio Outcue', 'audioOutcue'],
+    200 : ['Preview File Format', 'previewFileFormat'],
+    201 : ['Preview File Format Version', 'previewFileFormatVer'],
+    202 : ['Preview Data', 'previewData']
+};
 
 this.JpegMeta.JpegFile.prototype._markers = {
     /* Start Of Frame markers, non-differential, Huffman coding */
@@ -526,7 +585,7 @@ this.JpegMeta.JpegFile.prototype._markers = {
     0xea: ["APP10", null],
     0xeb: ["APP11", null],
     0xec: ["APP12", null],
-    0xed: ["APP13", null],
+    0xed: ["IPTC", "_iptcHandler", "IPTC Photo Metadata"],
     0xee: ["APP14", null],
     0xef: ["APP15", null],
     0xf0: ["JPG0", null], /* Reserved for JPEG extensions */
@@ -738,5 +797,43 @@ JpegMeta.JpegFile.prototype._exifHandler = function _exifHandler(mark, pos) {
 	    }
 	    this.gps._addProperty("longitude", "Dec. Longitude", longitude);
 	}
+    }
+};
+
+this.JpegMeta.JpegFile.prototype._iptcHandler = function _iptcHandler(mark, pos, segsize) {
+    this._addMetaGroup("iptc", "IPTC");
+
+    var endian = '<';
+    var offset, fieldStart, title, value, tag;
+    var length = JpegMeta.parseNum(endian, this._binary_data, pos + 4, 1);
+    var FILE_SEPARATOR_CHAR = 28,
+        START_OF_TEXT_CHAR = 2;
+
+    for (var i = 0; i < segsize; i++) {
+        fieldStart = pos + i;
+        if (JpegMeta.parseNum(endian, this._binary_data, fieldStart, 1) == START_OF_TEXT_CHAR) {
+            tag = JpegMeta.parseNum(endian, this._binary_data, fieldStart + 1, 1);
+            tag_desc = this._iptctags[tag];
+
+            if (!tag_desc) continue;
+            length = 0;
+            offset = 2;
+
+            while (
+                offset < segsize &&
+                JpegMeta.parseNum(endian, this._binary_data, fieldStart + offset, 1) != FILE_SEPARATOR_CHAR &&
+                JpegMeta.parseNum(endian, this._binary_data, fieldStart + offset + 1, 1) != START_OF_TEXT_CHAR) {
+                offset++;
+                length++;
+            }
+
+            if (!length) continue;
+
+            value = this._binary_data.slice(pos + i + 2, pos + i + 2 + length);
+            value = value.replace('\000', '').trim();
+
+            this.iptc._addProperty(tag_desc[1], tag_desc[0], value);
+            i += length - 1;
+        }
     }
 };
