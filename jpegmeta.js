@@ -279,6 +279,24 @@ this.JpegMeta.JpegFile.prototype._sofHandler = function _sofHandler (mark, pos) 
     this.general._addProperty("type", "Type", this._markers[mark][2]);
 };
 
+this.JpegMeta.JpegFile.prototype._commentHandler = function _commentHandler (mark, pos, size) {
+
+    var _pos, result;
+    pos++;
+    size--;
+    _pos = pos;
+    result = "";
+
+    while(_pos < pos+size) {
+        result += String.fromCharCode(this._binary_data.charCodeAt(_pos));
+        _pos++;
+    }
+
+    this._addMetaGroup("comment", "Comment");
+    this.comment._addProperty("comment", "Comment", result);
+};
+
+
 /* JFIF idents */
 this.JpegMeta.JpegFile.prototype._JFIF_IDENT = "JFIF\x00";
 this.JpegMeta.JpegFile.prototype._JFXX_IDENT = "JFXX\x00";
@@ -602,7 +620,7 @@ this.JpegMeta.JpegFile.prototype._markers = {
     0xfb: ["JPG11", null],
     0xfc: ["JPG12", null],
     0xfd: ["JPG13", null],
-    0xfe: ["COM", null], /* Comment */
+    0xfe: ["COM", "_commentHandler", "Comment"], /* Comment */
 
     /* Reserved markers */
     0x01: ["JPG13", null] /* For temporary private use in arithmetic coding */
