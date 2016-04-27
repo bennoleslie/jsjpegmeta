@@ -149,8 +149,24 @@ JpegMeta.MetaGroup = function MetaGroup(fieldName, description) {
 
 JpegMeta.MetaGroup.prototype._addProperty = function _addProperty(fieldName, description, value) {
     var property = new JpegMeta.MetaProp(fieldName, description, value);
-    this[property.fieldName] = property;
-    this.metaProps[property.fieldName] = property;
+    if (typeof this[property.fieldName] == 'undefined') {
+        this[property.fieldName] = property;
+        this.metaProps[property.fieldName] = property;
+    } else {
+        var currentProperty = this[property.fieldName];
+        var currentMetaProperty = this.metaProps[property.fieldName];
+        if (! Array.isArray(currentProperty)) {
+            this[property.fieldName] = new Array();
+            this[property.fieldName].push(currentProperty);
+            this[property.fieldName].push(property);
+            this.metaProps[property.fieldName] = new Array();
+            this.metaProps[property.fieldName].push(currentProperty);
+            this.metaProps[property.fieldName].push(property);
+        } else {
+            currentProperty.push(property);
+            currentMetaProperty.push(property);
+        }
+    }
 };
 
 JpegMeta.MetaGroup.prototype.toString = function toString() {
